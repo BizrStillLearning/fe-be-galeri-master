@@ -18,7 +18,6 @@ const ApiService = axios.create({
 // Interceptor to add token to headers
 ApiService.interceptors.request.use(
 	(config) => {
-
 		/*const localData = JSON.parse(localStorage.getItem('storediskola') || 'null')
 		const token = localData?.userToken ?? ''
 		if (token) {

@@ -2,7 +2,7 @@
   <div class="flex items-center justify-center min-h-screen bg-gray-100">
     <div class="bg-white p-6 rounded-lg shadow-md w-80">
       <h2 class="text-2xl font-bold mb-5 text-left">Login</h2>
-      <form @submit.prevent="onLogin" id="login-form">
+      <!--<form id="login-form">-->
         <div class="mb-4">
           <label for="email" class="block mb-2 text-gray-700">Email</label>
           <input
@@ -26,6 +26,7 @@
           />
         </div>
         <button
+          @click="onLogin"
           type="submit"
           class="w-full p-2 text-white bg-blue-500 rounded hover:bg-blue-700 transition duration-200"
         >
@@ -37,7 +38,7 @@
         <!--<div v-if="countdown > 0" class="text-green-600 mt-4">
           Login Berhasil! Anda akan diarahkan dalam {{ countdown }}...
         </div>-->
-        {{authStore.formLogin}}
+        {{ authStore.formLogin }}
         <div class="mt-4 text-center">
           <!--<a
             href="#"
@@ -47,7 +48,7 @@
             Forgot Password?
           </a>-->
         </div>
-      </form>
+      <!--</form>-->
     </div>
   </div>
 </template>
@@ -58,6 +59,25 @@ import {UseAuthStore} from "@/stores/authStores.js";
 const authStore = UseAuthStore()
 
 const onLogin = () => {
+  // validasi formLogin
+  /*if (authStore.formLogin.email === "") {
+    alert("email harus diisi")
+  } else {
+    // proses ke server
+  }*/
+
+  // if (authStore.formLogin.email === "" || authStore.formLogin.email === null) {
+  if (!authStore.formLogin.email) {
+    alert("email harus diisi")
+    return
+  }else if (!authStore.formLogin.password) {
+    alert("password harus diisi")
+    return
+  }
+
+  // proses ke server
+  console.log('panggil server')
+  authStore.prosesLoginPost()
 
 }
 </script>

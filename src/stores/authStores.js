@@ -5,18 +5,24 @@ import AuthService from "@/services/AuthService";
 export const UseAuthStore = defineStore('authStore', {
   state: () => ({
     formLogin: {
-      email: null,
-      password: null,
+      email: '',
+      password: '',
     },
   }),
   actions: {
-    async prosesLogin() {
-
+    async prosesLoginPost() {
       const form = this.formLogin
 
-      const authService = new AuthService()
-      const result = await authService.authLoginPost(form.email, form.password)
-      console.log(result)
+      try {
+        const authService = new AuthService()
+        const result = await authService.authLoginPost(form.email, form.password)
+        console.log(result)
+      }catch (e) {
+        console.log(e)
+      } finally {
+        // dijalankan terus menerus
+        console.log('finally')
+      }
     },
   },
 });

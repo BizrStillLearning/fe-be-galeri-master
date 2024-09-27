@@ -1,4 +1,4 @@
-import repository from '@/repositories/AuthRepository';
+import repository from "@/repositories/AuthRepository";
 
 export default class AuthService {
 	constructor() {
@@ -9,21 +9,24 @@ export default class AuthService {
 
 		// layer untuk validasi
 		if (!email) {
-			throw Error('Email is required');
+			throw Error("Email is required");
 		}
 		if (!password) {
-			throw Error('Password is required');
+			throw Error("Password is required");
 		}
 
-		try {
-			const formData = {
-				"email": email,
-				"password": password
-			}
-			return await this.dataRepository.postAuthLogin(formData);
-		} catch (error) {
-			console.log(error)
+		const formData = {
+			"email": email,
+			"password": password
 		}
+		const a = await this.dataRepository.postAuthLogin(formData);
+		console.log("aaaa")
+		return a
+		/*try {
+		} catch (error) {
+			console.log('--->',error)
+			throw error
+		}*/
 	}
 
 	async authCurrenrPost() {
@@ -33,4 +36,5 @@ export default class AuthService {
 			console.log(error)
 		}
 	}
+
 }
