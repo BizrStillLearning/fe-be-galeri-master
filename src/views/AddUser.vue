@@ -2,7 +2,7 @@
   <div class="container mx-auto p-4 w-full">
     <div class="bg-white shadow-md rounded-lg p-6 mb-4">
       <h2 class="text-2xl font-bold mb-2 text-gray-800">Selamat Datang di Dashboard</h2>
-      <p class="text-gray-600">Hallo <span class="font-bold text-gray-700">{{ userName }}</span> Anda berhasil login!</p>
+      <p class="text-gray-600">Hallo <span class="font-bold text-gray-700">{{ username }}</span> Anda berhasil login!</p>
       <p class="text-gray-600">Level: <span class="font-bold text-gray-700">{{ userLevel }}</span></p>
       <div class="flex space-x-2 mt-4">
         <router-link to="/dashboard" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
@@ -97,34 +97,52 @@
       </form>
     </main>
   </div>
-  
-  </template>
-  
-  <script>
-  export default {
-    data() {
-      return {
-        userName: "Nama Pengguna", 
-        userLevel: "Admin", 
-        form: {
-        nama: "",
-        no_telpon: "",
-        email: "",
-        password: "",
-        level: "admin",
-        },
-        message: "",
-        messageClass: "",
-      };
-    },
-    methods: {
+</template>
+
+<script>
+import { useAuthStore } from '@/stores/AuthStore';
+import { computed } from 'vue'; 
+import { useRouter } from 'vue-router'; 
+
+export default {
+  setup() {
+    const authStore = useAuthStore();
+    const router = useRouter(); 
+
+    
+    const username = computed(() => authStore.currentUser?.nama);
+    const userLevel = computed(() => authStore.currentUser?.level);
+
+    const logout = () => {
+      localStorage.clear(); // Menghapus semua data di localStorage
+      authStore.currentUser = null; // Mengatur state pengguna ke null
+      router.push('/'); // Redirect ke halaman login
+      console.log("Logout");
+    };
+
+    const form = {
+      nama: "",
+      no_telpon: "",
+      email: "",
+      password: "",
+      level: "admin",
+    };
+    
+    return {
+      username,
+      userLevel, 
+      logout,
+      form,
+      message: "",
+      messageClass: "",
+    };
+  },
+  methods: {
     async submitUser() {
       this.message = "";
       this.messageClass = "";
-    }
+      // Logic untuk menyimpan pengguna baru
+    },
   }
-  };
-  </script>
-  
-  
-  
+};
+</script>

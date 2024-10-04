@@ -2,7 +2,7 @@
   <div class="container mx-auto p-4 w-full">
     <div class="bg-white shadow-md rounded-lg p-6 mb-4">
       <h2 class="text-2xl font-bold mb-2 text-gray-800">Selamat Datang di Dashboard</h2>
-      <p class="text-gray-600">Hallo <span class="font-bold text-gray-700">{{ userName }}</span> Anda berhasil login!</p>
+      <p class="text-gray-600">Hallo <span class="font-bold text-gray-700">{{ username }}</span> Anda berhasil login!</p>
       <p class="text-gray-600">Level: <span class="font-bold text-gray-700">{{ userLevel }}</span></p>
       <div class="flex space-x-2 mt-4">
         <router-link to="/dashboard" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Dashboard</router-link>
@@ -22,7 +22,7 @@
           <button @click="refresh" id="btn-refresh" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Refresh</button>
         </div>
       </div>
-      <label for="filter_q" class="block mb-2 p-8">
+      <label for="filter_q" class="block mb-2 p-8 pt-0">
         <input type="text" id="filter_q" v-model="filter" placeholder="Filter nama galeri" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
       </label>
     </div>
@@ -60,14 +60,30 @@
 <script>
 import { useGaleriStore } from '../stores/galeriStores';
 import { ref } from 'vue';
+import { useAuthStore } from '@/stores/AuthStore';
+import { computed } from 'vue'; 
 
 export default {
-  data() {
+  setup() {
+    const authStore = useAuthStore();
+    // Menggunakan computed untuk memastikan data selalu diperbarui
+    const username = computed(() => authStore.currentUser?.nama);
+    const userLevel = computed(() => authStore.currentUser?.level);
+    const logout = () => {
+      localStorage.clear(); // Menghapus semua data di localStorage
+      authStore.currentUser = null; // Mengatur state pengguna ke null
+      router.push('/'); // Redirect ke halaman login
+      console.log("Logout");
+    };
+
+  
+
     return {
       filter: '',
       galeriStore: useGaleriStore(),
-      userName: "Nama Pengguna",
-      userLevel: "Admin",
+      username,
+      userLevel,
+      logout,
       filteredGalleries: [], // Menyimpan daftar galeri yang difilter
       timeout: null,
       isEditImageModalOpen: false,

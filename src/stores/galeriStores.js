@@ -1,4 +1,3 @@
-// src/stores/galeriStores.js
 import { defineStore } from 'pinia';
 
 export const useGaleriStore = defineStore('galeri', {

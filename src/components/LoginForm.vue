@@ -8,8 +8,7 @@
           <input
             type="email"
             id="email"
-            v-model="email"
-            required
+            v-model="authStore.formLogin.email"
             placeholder="Masukkan Email"
             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:placeholder-blue-500"
           />
@@ -19,9 +18,8 @@
           <input
             type="password"
             id="password"
-            v-model="password"
+            v-model="authStore.formLogin.password"
             placeholder="Masukkan Password"
-            required
             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:placeholder-blue-500"
           />
         </div>
@@ -31,11 +29,11 @@
         >
           Login
         </button>
-        <div id="error-message" class="text-red-500 mt-4">
-          {{ errorMessage }}
-        </div>
         <div v-if="countdown > 0" class="text-green-600 mt-4">
           Login Berhasil! Anda akan diarahkan dalam {{ countdown }}...
+        </div>
+        <div v-if="errorMessage" class="text-red-600 mt-4">
+          {{ errorMessage }}
         </div>
         <div class="mt-4 text-center">
           <a
@@ -52,46 +50,69 @@
 </template>
 
 <script>
-export default {
-  data() {
-    return {
-      email: '',
-      password: '',
-      errorMessage: '',
-      countdown: 0,
-    };
-  },
-  methods: {
-    handleSubmit() {
-      if (!this.isValidEmail(this.email)) {
-        this.errorMessage = 'Email tidak valid!';
-        return;
-      }
+import { useAuthStore } from "../stores/AuthStore"; 
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-      if (this.password !== 'password123') {
-        this.errorMessage = 'Terjadi Kesalahan: Password salah!';
-      } else {
-        this.errorMessage = '';
-        this.startCountdown();
-      }
-    },
-    isValidEmail(email) {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(email);
-    },
-    handleForgotPassword() {
-      alert('Hubungi Admin Untuk Mereset Password');
-    },
-    startCountdown() {
-      this.countdown = 5;
-      const countdownInterval = setInterval(() => {
-        this.countdown -= 1;
-        if (this.countdown <= 0) {
-          clearInterval(countdownInterval);
-          this.$router.push({ name: 'Dashboard' });
+export default {
+  setup() {
+    const authStore = useAuthStore();
+    const userData = authStore.currentUser;
+    const router = useRouter();
+    const errorMessage = ref('');
+    const countdown = ref(0);
+    let countdownInterval = null; // Menyimpan interval countdown
+
+    const handleSubmit = async () => {
+  // Validasi input
+  if (!authStore.formLogin.email || !authStore.formLogin.password) {
+    alert("Email dan Password harus diisi");
+    return;
+  }
+
+  try {
+    const response = await authStore.prosesLoginPost();
+    if (response.success) {
+      errorMessage.value = ''; 
+      startCountdown();
+    } else {
+      errorMessage.value = response.message; // Mengambil pesan dari response
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    errorMessage.value = 'Terjadi kesalahan saat login.';
+  }
+};
+
+
+
+    const startCountdown = () => {
+      countdown.value = 5; // Set countdown ke 5 detik
+      console.log("Countdown started with value:", countdown.value); // Debug log
+      clearInterval(countdownInterval); // Bersihkan interval sebelumnya jika ada
+      countdownInterval = setInterval(() => {
+        countdown.value -= 1;
+        console.log("Countdown:", countdown.value); // Debug log
+        if (countdown.value <= 0) {
+          clearInterval(countdownInterval); // Hentikan interval
+          console.log("Redirecting to Dashboard..."); // Debug log
+          router.push({ name: 'Dashboard' });
         }
       }, 1000);
-    },
+    };
+
+    const handleForgotPassword = () => {
+      alert('Hubungi Admin Untuk Mereset Password');
+    };
+
+    return {
+      authStore,
+      handleSubmit,
+      errorMessage,
+      countdown,
+      handleForgotPassword,
+      userData,
+    };
   },
 };
 </script>
