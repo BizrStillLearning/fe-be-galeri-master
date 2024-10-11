@@ -8,9 +8,10 @@
           <input
             type="email"
             id="email"
-            v-model="authStore.formLogin.email"
+            v-model="email"
             placeholder="Masukkan Email"
             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:placeholder-blue-500"
+            required
           />
         </div>
         <div class="mb-4">
@@ -18,16 +19,18 @@
           <input
             type="password"
             id="password"
-            v-model="authStore.formLogin.password"
+            v-model="password"
             placeholder="Masukkan Password"
             class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:placeholder-blue-500"
+            required
           />
         </div>
         <button
           type="submit"
+          :disabled="loading"
           class="w-full p-2 text-white bg-blue-500 rounded hover:bg-blue-700 transition duration-200"
         >
-          Login
+          {{ loading ? "Processing..." : "Login" }}
         </button>
         <div v-if="countdown > 0" class="text-green-600 mt-4">
           Login Berhasil! Anda akan diarahkan dalam {{ countdown }}...
@@ -50,68 +53,76 @@
 </template>
 
 <script>
-import { useAuthStore } from "../stores/AuthStore"; 
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { useAuthStore } from '@/stores/AuthStore'; 
 
 export default {
   setup() {
     const authStore = useAuthStore();
-    const userData = authStore.currentUser;
     const router = useRouter();
-    const errorMessage = ref('');
+    const email = ref('');
+    const password = ref('');
     const countdown = ref(0);
-    let countdownInterval = null; // Menyimpan interval countdown
+    const errorMessage = ref('');
+    const loading = ref(false); 
 
     const handleSubmit = async () => {
-  // Validasi input
-  if (!authStore.formLogin.email || !authStore.formLogin.password) {
-    alert("Email dan Password harus diisi");
-    return;
-  }
-
-  try {
-    const response = await authStore.prosesLoginPost();
-    if (response.success) {
       errorMessage.value = ''; 
-      startCountdown();
-    } else {
-      errorMessage.value = response.message; // Mengambil pesan dari response
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    errorMessage.value = 'Terjadi kesalahan saat login.';
-  }
-};
+      loading.value = true; 
+      try {
+        // Mengirim request login ke API
+        const response = await axios.post('http://localhost/smkti/FE-BE-galeri/restapi/api/auth/login', {
+          email: email.value,
+          password: password.value,
+        });
 
+        // Mengecek jika token ada
+        if (response.data.token && response.data.data) {
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('currentUser', JSON.stringify(response.data.data));
 
-
-    const startCountdown = () => {
-      countdown.value = 5; // Set countdown ke 5 detik
-      console.log("Countdown started with value:", countdown.value); // Debug log
-      clearInterval(countdownInterval); // Bersihkan interval sebelumnya jika ada
-      countdownInterval = setInterval(() => {
-        countdown.value -= 1;
-        console.log("Countdown:", countdown.value); // Debug log
-        if (countdown.value <= 0) {
-          clearInterval(countdownInterval); // Hentikan interval
-          console.log("Redirecting to Dashboard..."); // Debug log
-          router.push({ name: 'Dashboard' });
+          countdown.value = 5; // Mengatur countdown sebelum redirect
+          const interval = setInterval(() => {
+            if (countdown.value > 0) {
+              countdown.value--;
+            } else {
+              clearInterval(interval);
+              router.push('/dashboard');
+            }
+          }, 1000);
+        } else {
+          errorMessage.value = response.data.message || "Login gagal. Silakan coba lagi."; // Menampilkan pesan error
         }
-      }, 1000);
+      } catch (error) {
+        // Menangani error yang mungkin terjadi
+        if (error.response) {
+          if (error.response.status === 400) {
+            errorMessage.value = error.response.data.message; // Menampilkan pesan error
+          } else {
+            errorMessage.value = "Terjadi kesalahan. Silakan coba lagi.";
+          }
+        } else {
+          errorMessage.value = "Terjadi kesalahan jaringan.";
+        }
+      } finally {
+        loading.value = false; // Mematikan state loading
+      }
     };
 
     const handleForgotPassword = () => {
-      alert('Hubungi Admin Untuk Mereset Password');
+      alert('Lupa password? Silakan hubungi admin atau periksa email Anda untuk petunjuk pengaturan ulang.');
     };
 
     return {
-      authStore,
+      email,
+      password,
       handleSubmit,
-      errorMessage,
       countdown,
+      errorMessage,
       handleForgotPassword,
-      userData,
+      loading, 
     };
   },
 };

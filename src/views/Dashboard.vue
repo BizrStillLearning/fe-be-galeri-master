@@ -24,60 +24,58 @@
 
 <script>
 import { useAuthStore } from '@/stores/AuthStore';
+import axios from 'axios';
 import { computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router'; // Mengimpor useRouter
+import { useRouter } from 'vue-router';
+
+// Definisikan API_BASE_URL
+const API_BASE_URL = 'http://localhost/smkti/FE-BE-galeri/restapi'; // Ganti dengan URL API yang sesuai
 
 export default {
   setup() {
     const authStore = useAuthStore();
-    const router = useRouter(); // Menginisialisasi router
-    
-    // Menggunakan computed untuk memastikan data selalu diperbarui
-    const username = computed(() => authStore.currentUser?.nama);
-    const userLevel = computed(() => authStore.currentUser?.level);
+    const router = useRouter();
 
+    // Computed properties untuk mendapatkan username dan level pengguna
+    const username = computed(() => authStore.currentUser?.nama || '');
+    const userLevel = computed(() => authStore.currentUser?.level || '');
+
+    // Fungsi untuk mendapatkan data pengguna
     const getCurrentUsers = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        // Redirect ke halaman login jika token tidak ada
-        router.push('/'); // Menggunakan router untuk redirect
-        return; // Menghentikan eksekusi lebih lanjut
+        router.push('/'); // Redirect ke halaman login jika token tidak ada
+        return;
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/current`, {
-          method: 'GET',
+        const response = await axios.get(`${API_BASE_URL}/api/auth/current`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (response.status === 401) {
-            localStorage.clear();
-            alert(errorData.message);
-            router.push('/'); // Redirect ke halaman login
-            return;
-          }
+        // Jika respons tidak berhasil, tangani status 401
+        if (response.status === 401) {
+          localStorage.clear();
+          alert("Session Anda telah berakhir. Silakan login kembali.");
+          router.push('/'); // Redirect ke halaman login
+          return;
         }
 
-        const data = await response.json();
-        if (data.data) {
-          authStore.currentUser = data.data; // Menyimpan data pengguna ke Pinia
-          localStorage.setItem('currentUsers', JSON.stringify(data.data));
-        }
+        // Menyimpan data pengguna ke Pinia
+        authStore.currentUser = response.data.data; // Ambil data pengguna dari response
       } catch (error) {
         console.error('Error:', error);
       }
     };
 
+    // Fungsi untuk logout
     const logout = () => {
       localStorage.clear(); // Menghapus semua data di localStorage
       authStore.currentUser = null; // Mengatur state pengguna ke null
       router.push('/'); // Redirect ke halaman login
-      console.log("Logout");
     };
 
     // Memanggil getCurrentUsers saat komponen dimuat

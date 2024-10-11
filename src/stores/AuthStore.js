@@ -12,12 +12,15 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async prosesLoginPost() {
       try {
+        // Mengirim data login ke API
         const response = await AuthRepository.postAuthLogin(this.formLogin);
         
         // Debug: Lihat respons dari server
         console.log("Login response:", response);
 
+        // Memeriksa apakah ada data dalam respons
         if (response.data) {
+          // Menyimpan data pengguna ke state
           this.currentUser = {
             id: response.data.id,
             nama: response.data.nama,
@@ -27,11 +30,13 @@ export const useAuthStore = defineStore('auth', {
             tgl_update: response.data.tgl_update
           };
 
-          if (response.token) {
-            localStorage.setItem('token', response.token);
+          // Memastikan token diambil dari response.data
+          if (response.data.token) { // Ganti dengan response.data.token
+            localStorage.setItem('token', response.data.token);
           }
 
-          localStorage.setItem('currentUser', JSON.stringify(this.currentUser)); // Menyimpan currentUser ke localStorage
+          // Menyimpan currentUser ke localStorage
+          localStorage.setItem('currentUser', JSON.stringify(this.currentUser)); 
           
           return { success: true, message: response.message };
         } else {

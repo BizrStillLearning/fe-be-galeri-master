@@ -2,8 +2,12 @@
   <div class="container mx-auto p-4 w-full">
     <div class="bg-white shadow-md rounded-lg p-6 mb-4">
       <h2 class="text-2xl font-bold mb-2 text-gray-800">Selamat Datang di Dashboard</h2>
-      <p class="text-gray-600">Hallo <span class="font-bold text-gray-700">{{ username }}</span> Anda berhasil login!</p>
-      <p class="text-gray-600">Level: <span class="font-bold text-gray-700">{{ userLevel }}</span></p>
+      <p class="text-gray-600">
+        Hallo <span class="font-bold text-gray-700">{{ currentUser?.nama || 'Pengguna' }}</span>, Anda berhasil login!
+      </p>
+      <p class="text-gray-600">
+        Level: <span class="font-bold text-gray-700">{{ currentUser?.level || 'Tidak diketahui' }}</span>
+      </p>
       <div class="flex space-x-2 mt-4">
         <router-link to="/dashboard" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
           Dashboard
@@ -19,130 +23,86 @@
         </button>
       </div>
     </div>
-    <main class="bg-slate-100 p-6 pt-2 rounded-lg shadow-md w-full max-w-md mx-auto mt-8">
-      <div class="header-title text-center my-4">
-        <h2 class="text-2xl font-bold">Tambah Pengguna</h2>
+
+    <h2 class="text-2xl font-bold mb-4">Tambah Pengguna</h2>
+    <form @submit.prevent="submitUser">
+      <div class="mb-4">
+        <label for="nama" class="block text-sm font-medium text-gray-700">Nama</label>
+        <input v-model="userData.nama" type="text" id="nama" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
       </div>
-      <form @submit.prevent="submitUser" class="space-y-4">
-        <div class="form-group">
-          <label for="nama" class="block text-left">
-            Nama
-            <input 
-              required 
-              type="text" 
-              v-model="form.nama" 
-              id="nama" 
-              class="mt-1 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            />
-          </label>
-        </div>
-        <div class="form-group">
-          <label for="no_telpon" class="block text-left">
-            No Telepon
-            <input 
-              required 
-              type="text" 
-              v-model="form.no_telpon" 
-              id="no_telpon" 
-              class="mt-1 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            />
-          </label>
-        </div>
-        <div class="form-group">
-          <label for="email" class="block text-left">
-            Email
-            <input 
-              required 
-              type="email" 
-              v-model="form.email" 
-              id="email" 
-              class="mt-1 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            />
-          </label>
-        </div>
-        <div class="form-group">
-          <label for="password" class="block text-left">
-            Password
-            <input 
-              required 
-              type="password" 
-              v-model="form.password" 
-              id="password" 
-              class="mt-1 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
-            />
-          </label>
-        </div>
-        <div class="form-group">
-          <label for="level" class="block text-left">
-            Level
-            <select 
-              v-model="form.level" 
-              id="level" 
-              class="mt-1 p-2 border border-gray-300 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="super admin">super admin</option>
-              <option value="admin">admin</option>
-            </select>
-          </label>
-        </div>
-        <button 
-          type="submit"  
-          class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Simpan
-        </button>
-        <div v-if="message" :class="messageClass" class="mt-4 text-center">
-          {{ message }}
-        </div>
-      </form>
-    </main>
+      <div class="mb-4">
+        <label for="no_telpon" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+        <input v-model="userData.no_telpon" type="text" id="no_telpon" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
+      </div>
+      <div class="mb-4">
+        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+        <input v-model="userData.email" type="email" id="email" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
+      </div>
+      <div class="mb-4">
+        <label for="level" class="block text-sm font-medium text-gray-700">Level</label>
+        <select v-model="userData.level" id="level" class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
+          <option value="" disabled selected>Pilih Level</option>
+          <option value="admin">Admin</option>
+          <option value="super admin">Super Admin</option>
+        </select>
+      </div>
+      <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Simpan</button>
+    </form>
   </div>
 </template>
 
 <script>
+import { computed, ref } from 'vue';
+import { useUserStore } from '@/stores/UserStores'; 
 import { useAuthStore } from '@/stores/AuthStore';
-import { computed } from 'vue'; 
-import { useRouter } from 'vue-router'; 
+import { useRouter } from 'vue-router';
 
 export default {
   setup() {
+    const userStore = useUserStore();
     const authStore = useAuthStore();
-    const router = useRouter(); 
+    const router = useRouter();
 
-    
-    const username = computed(() => authStore.currentUser?.nama);
-    const userLevel = computed(() => authStore.currentUser?.level);
+    // Ambil currentUser dari authStore
+    const currentUser = computed(() => authStore.currentUser || { nama: 'Guest', level: 'Unknown' });
+
+    const userData = ref({
+      nama: '',
+      no_telpon: '',
+      email: '',
+      level: ''
+    });
+
+    const submitUser = async () => {
+      console.log('Data yang dikirim:', userData.value); // Debugging data yang dikirim
+      // Validasi field
+      if (!userData.value.nama || !userData.value.no_telpon || !userData.value.email || !userData.value.level) {
+        alert('Semua field wajib diisi!');
+        return;
+      }
+
+      try {
+        await userStore.addUser(userData.value);
+        alert('Data pengguna berhasil ditambahkan.');
+        router.push('/usertable'); // Arahkan ke halaman tabel pengguna setelah berhasil menambah
+      } catch (error) {
+        console.error('Error while adding user:', error.response?.data || error.message);
+        alert('Gagal menambahkan pengguna.'); // Tampilkan alert kesalahan
+      }
+    };
 
     const logout = () => {
-      localStorage.clear(); // Menghapus semua data di localStorage
-      authStore.currentUser = null; // Mengatur state pengguna ke null
-      router.push('/'); // Redirect ke halaman login
-      console.log("Logout");
+      authStore.logout(); // Fungsi logout di authStore
+      router.push('/');
     };
 
-    const form = {
-      nama: "",
-      no_telpon: "",
-      email: "",
-      password: "",
-      level: "admin",
-    };
-    
     return {
-      username,
-      userLevel, 
+      currentUser,
+      userData,
+      submitUser,
       logout,
-      form,
-      message: "",
-      messageClass: "",
     };
-  },
-  methods: {
-    async submitUser() {
-      this.message = "";
-      this.messageClass = "";
-      // Logic untuk menyimpan pengguna baru
-    },
   }
 };
 </script>
+
